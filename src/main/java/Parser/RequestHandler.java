@@ -1,7 +1,6 @@
 package Parser;
 
 import Response.ServerResponse;
-import Server.ServerInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,15 +11,16 @@ import java.util.*;
 
 public class RequestHandler {
 
-    private final ServerResponse  serverResponse = new ServerResponse();
+    private final ServerResponse serverResponse = new ServerResponse();
     private final String request;
+    private final String dirPath;
     private RequestType requestType;
     private String path;
     private ByteBuffer response;
     private File file;
 
-
-    public RequestHandler(String request) {
+    public RequestHandler(String dirPath, String request) {
+        this.dirPath = dirPath;
         this.request = request;
     }
 
@@ -52,7 +52,8 @@ public class RequestHandler {
     }
 
     private void setFilePath(){
-        file = new File(ServerInfo.defaultPath + path);
+        makeFolder();
+        file = new File(dirPath + path);
         if(!file.exists()){
             try {
                 file.createNewFile();
@@ -60,6 +61,11 @@ public class RequestHandler {
                 throw new RuntimeException("unable to create file");
             }
         }
+    }
+
+    private void makeFolder() {
+        File file = new File(dirPath);
+        file.mkdirs();
     }
 
     private void buildByteBuffer() {

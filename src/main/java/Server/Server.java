@@ -30,13 +30,18 @@ public class Server {
     private void runServerOnSpecifiedPort() {
         try (ServerSocketChannel server = ServerSocketChannel.open()) {
             server.bind(new InetSocketAddress(port));
-            System.out.println("Server running at port: " + port);
+            printServerInfo();
             while (true) {
                 acceptAndSubmit(server);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void printServerInfo() {
+        System.out.println(String.format(
+                "Server running at port: %d, verbose: %s, working directory: %s", port, isVerbose, filePath));
     }
 
     private void acceptAndSubmit(ServerSocketChannel server) throws IOException {
@@ -47,7 +52,7 @@ public class Server {
     private void readAndWriteToClient(SocketChannel socket) {
         try (SocketChannel client = socket) {
             ByteBuffer input = readFromClient(client);
-            RequestHandler requestHandler = new RequestHandler(new String(input.array()));
+            RequestHandler requestHandler = new RequestHandler(filePath, new String(input.array()));
             ByteBuffer response = requestHandler.handleClientRequest();
             client.write(response);
         } catch (Exception e) {
