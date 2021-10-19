@@ -1,6 +1,4 @@
-package Parser;
-
-import Server.ServerInfo;
+package ServerInfo;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,12 +31,10 @@ public class ServerSettingsParser {
     private void getInput() {
         System.out.print("> ");
         String input = scanner.nextLine();
-
         if (input.equalsIgnoreCase("httpfs help")) {
             displayHelp();
             getInput();
         }
-
         setInputArr(input);
         collectServerInfo();
         scanner.close();

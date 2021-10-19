@@ -1,6 +1,4 @@
-package Parser;
-
-import Response.ServerResponse;
+package Response;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,26 +12,34 @@ public class RequestHandler {
     private final ServerResponse serverResponse = new ServerResponse();
     private final String request;
     private final String dirPath;
+    private final boolean isVerbose;
     private RequestType requestType;
     private String path;
     private ByteBuffer response;
     private File file;
 
-    public RequestHandler(String dirPath, String request) {
+    public RequestHandler(String dirPath, boolean isVerbose, String request) {
+        this.isVerbose = isVerbose;
         this.dirPath = dirPath;
         this.request = request;
     }
 
     public ByteBuffer handleClientRequest() {
         try {
+            printRequestToScreen();
             setRequestType();
             setPath();
             setFilePath();
-            buildByteBuffer();
+            buildResponse();
             return response;
         } catch (Exception e) {
+            printMessagesToScreen(e.toString());
             return response;
         }
+    }
+
+    private void printRequestToScreen() {
+        printMessagesToScreen(String.format("HTTP request: \n%s", this.request));
     }
 
     private void setRequestType() {
@@ -52,23 +58,10 @@ public class RequestHandler {
     }
 
     private void setFilePath(){
-        makeFolder();
         file = new File(dirPath + path);
-        if(!file.exists()){
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException("unable to create file");
-            }
-        }
     }
 
-    private void makeFolder() {
-        File file = new File(dirPath);
-        file.mkdirs();
-    }
-
-    private void buildByteBuffer() {
+    private void buildResponse() {
         if (requestType.equals(RequestType.GET)) {
             handleGetRequest();
         } else if (requestType.equals(RequestType.POST)) {
@@ -97,7 +90,13 @@ public class RequestHandler {
         return headers;
     }
 
+    private void printFileCreated() {
+        printMessagesToScreen(String.format("file created %s", file.toString()));
+    }
+
     private String getGETBody() {
+        checkIfFilePathExists();
+
         if(file.isFile()){
             try {
                 return Files.readString(Path.of(file.getPath()));
@@ -109,13 +108,38 @@ public class RequestHandler {
         }
     }
 
+    private void checkIfFilePathExists() {
+        if(!file.exists()) {
+            this.response = serverResponse.buildResponse(404, Map.of(),  "file path does not exist");
+            throw new RuntimeException("File path does not exist");
+        }
+    }
+
     private void handlePostRequest() {
         Map<String, String> headers;
+        makeFileAndFolders();
         ensurePathIsToFile();
         String body = getBody();
         tryToWriteToFile(body);
         headers = addHeaders();
-        this.response = serverResponse.buildResponse(200, headers, body);
+        printFileCreated();
+        this.response = serverResponse.buildResponse(201, headers, body);
+    }
+
+    private void makeFileAndFolders() {
+        makeFolder();
+        if(!file.exists()){
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException("unable to create file");
+            }
+        }
+    }
+
+    private void makeFolder() {
+        File file = new File(dirPath);
+        file.mkdirs();
     }
 
     private void ensurePathIsToFile() {
@@ -151,18 +175,17 @@ public class RequestHandler {
         if (files == null || files.length == 0) {
             lastModifed = new Date(file.lastModified());
         } else {
-            Arrays.sort(files, new Comparator<File>() {
-                public int compare(File o1, File o2) {
-                    return Long.compare(o2.lastModified(), o1.lastModified());
-                }
-            });
+            Arrays.sort(files, (o1, o2) -> Long.compare(o2.lastModified(), o1.lastModified()));
             lastModifed =  new Date(files[0].lastModified());
         }
         return Map.of("Last-Modified", lastModifed.toString());
     }
 
-    private void handleError(String message, int code) {
-        this.response = serverResponse.buildResponse(code, Map.of(), null);
+    private void printMessagesToScreen(String message){
+        if(this.isVerbose){
+            System.out.println("***********debug***********");
+            System.out.println(message);
+        }
     }
 
     private enum RequestType {

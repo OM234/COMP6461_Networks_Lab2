@@ -1,6 +1,7 @@
 package Server;
 
-import Parser.RequestHandler;
+import ServerInfo.ServerInfo;
+import Response.RequestHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,28 +36,30 @@ public class Server {
                 acceptAndSubmit(server);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            printMessagesToScreen(e.getMessage());
         }
     }
 
     private void printServerInfo() {
-        System.out.println(String.format(
+        printMessagesToScreen(String.format(
                 "Server running at port: %d, verbose: %s, working directory: %s", port, isVerbose, filePath));
     }
 
     private void acceptAndSubmit(ServerSocketChannel server) throws IOException {
         SocketChannel client = server.accept();
+        printMessagesToScreen(String.format("Connected to client at: %s", client.getRemoteAddress()));
         ForkJoinPool.commonPool().submit(() -> readAndWriteToClient(client));
     }
 
     private void readAndWriteToClient(SocketChannel socket) {
         try (SocketChannel client = socket) {
             ByteBuffer input = readFromClient(client);
-            RequestHandler requestHandler = new RequestHandler(filePath, new String(input.array()));
+            RequestHandler requestHandler = new RequestHandler(filePath, isVerbose, new String(input.array()));
             ByteBuffer response = requestHandler.handleClientRequest();
             client.write(response);
+            printMessagesToScreen(String.format("Disconnected from client at: %s", client.getRemoteAddress()));
         } catch (Exception e) {
-            handleExceptions(e);
+            printMessagesToScreen(e.getMessage());
         }
     }
 
@@ -67,9 +70,10 @@ public class Server {
         return input;
     }
 
-    private void handleExceptions(Exception e) {
-        if(this.isVerbose) {
-            e.printStackTrace();
+    private void printMessagesToScreen(String message){
+        if(this.isVerbose){
+            System.out.println("***********debug***********");
+            System.out.println(message);
         }
     }
 }

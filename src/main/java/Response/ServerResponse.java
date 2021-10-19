@@ -1,7 +1,6 @@
 package Response;
 
 import java.nio.ByteBuffer;
-import java.util.Date;
 import java.util.Map;
 
 public class ServerResponse {
@@ -14,18 +13,10 @@ public class ServerResponse {
             404, "Not Found"
     );
 
-    private int responseCode;
     private String message = "";
-    private Date current;
-    private Date lastModified;
-    private String contentType;
     private int code;
     private Map<String, String> headers;
     private String body;
-
-    public ByteBuffer buildResponse(Map<String, String> headers) {
-        return null;
-    }
 
     public ByteBuffer buildResponse(int code, Map<String, String> headers, String body) {
         this.code = code;

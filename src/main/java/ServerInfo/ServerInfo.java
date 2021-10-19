@@ -1,4 +1,4 @@
-package Server;
+package ServerInfo;
 
 public class ServerInfo {
     public static final String defaultPath = "./src/workingDir/";
