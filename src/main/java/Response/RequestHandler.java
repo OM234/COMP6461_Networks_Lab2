@@ -9,6 +9,8 @@ import java.util.*;
 
 public class RequestHandler {
 
+    public static final String APPLICATION_JSON = "application/json";
+    public static final String TEXT_HTML = "text/html";
     private final ServerResponse serverResponse = new ServerResponse();
     private final String request;
     private final String dirPath;
@@ -16,6 +18,7 @@ public class RequestHandler {
     private RequestType requestType;
     private String path;
     private ByteBuffer response;
+    private String contentType;
     private File file;
 
     public RequestHandler(String dirPath, boolean isVerbose, String request) {
@@ -30,6 +33,7 @@ public class RequestHandler {
             setRequestType();
             setPath();
             setFilePath();
+            setContentType();
             buildResponse();
             return response;
         } catch (Exception e) {
@@ -61,6 +65,26 @@ public class RequestHandler {
         file = new File(dirPath + path);
     }
 
+    private void setContentType() {
+
+        String acceptRequest = getAccept();
+        if(acceptRequest.equals(APPLICATION_JSON)){
+            this.contentType = (APPLICATION_JSON);
+        } else {
+            this.contentType = (TEXT_HTML);
+        }
+    }
+
+    private String getAccept() {
+        return request.lines()
+                .filter(line -> line.startsWith("Accept: "))
+                .findAny()
+                .map(acceptLine -> {
+                    String accept = acceptLine.split(" ")[1];
+                    return accept;
+                }).orElse("");
+    }
+
     private void buildResponse() {
         if (requestType.equals(RequestType.GET)) {
             handleGetRequest();
@@ -74,9 +98,8 @@ public class RequestHandler {
     private void handleGetRequest() {
         try {
             Map<String, String> headers;
-            String body = getGETBody();
             headers = addHeaders();
-            this.response = serverResponse.buildResponse(200, headers, body);
+            this.response = serverResponse.buildResponse(200, headers, file);
         } catch (NullPointerException e) {
             throw new RuntimeException("error retrieving file");
         }
@@ -84,9 +107,9 @@ public class RequestHandler {
 
     private Map<String, String> addHeaders() {
         Map<String, String> headers = new HashMap<>();
-        headers.putAll(getLastModified());
-        headers.putAll(getCurrentDate());
-        headers.put("Content-Type", "text/html");
+        headers.putAll(getLastModifiedHeader());
+        headers.putAll(getCurrentDateHeader());
+        headers.put("Content-Type", this.contentType);
         return headers;
     }
 
@@ -94,36 +117,15 @@ public class RequestHandler {
         printMessagesToScreen(String.format("file created %s", file.toString()));
     }
 
-    private String getGETBody() {
-        checkIfFilePathExists();
-
-        if(file.isFile()){
-            try {
-                return Files.readString(Path.of(file.getPath()));
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to read file");
-            }
-        } else {
-            return Arrays.asList(file.listFiles()).toString();
-        }
-    }
-
-    private void checkIfFilePathExists() {
-        if(!file.exists()) {
-            this.response = serverResponse.buildResponse(404, Map.of(),  "file path does not exist");
-            throw new RuntimeException("File path does not exist");
-        }
-    }
-
     private void handlePostRequest() {
         Map<String, String> headers;
         makeFileAndFolders();
         ensurePathIsToFile();
-        String body = getBody();
+        String body = getPostBody();
         tryToWriteToFile(body);
         headers = addHeaders();
         printFileCreated();
-        this.response = serverResponse.buildResponse(201, headers, body);
+        this.response = serverResponse.buildResponse(201, headers, file);
     }
 
     private void makeFileAndFolders() {
@@ -148,7 +150,7 @@ public class RequestHandler {
         }
     }
 
-    private String getBody() {
+    private String getPostBody() {
         String body = this.request.split("\n\n")[1];
         if(body.isEmpty()){
             throw new RuntimeException("post body is empty");
@@ -164,11 +166,11 @@ public class RequestHandler {
         }
     }
 
-    private Map<String, String> getCurrentDate() {
+    private Map<String, String> getCurrentDateHeader() {
         return Map.of("Date", new Date().toString());
     }
 
-    private Map<String, String> getLastModified(){
+    private Map<String, String> getLastModifiedHeader(){
         Date lastModifed;
 
         File[] files = file.listFiles();
