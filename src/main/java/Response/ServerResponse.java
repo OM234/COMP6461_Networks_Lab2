@@ -47,7 +47,7 @@ public class ServerResponse {
         }
     }
 
-    private ByteBuffer buildResponse(int code, Map<String, String> headers, String body) {
+    public ByteBuffer buildResponse(int code, Map<String, String> headers, String body) {
         this.code = code;
         this.headers = headers;
         this.body = body;

@@ -38,6 +38,9 @@ public class RequestHandler {
             return response;
         } catch (Exception e) {
             printMessagesToScreen(e.toString());
+            if(response == null) {
+                buildErrorResponse(e);
+            }
             return response;
         }
     }
@@ -151,8 +154,12 @@ public class RequestHandler {
     }
 
     private String getPostBody() {
-        String body = this.request.split("\n\n")[1];
-        if(body.isEmpty()){
+        String body;
+        if(this.request.split("\n\n").length > 1) {
+            body = this.request.split("\n\n")[1];
+        } else if(this.request.split("\r\n\r\n").length > 1) {
+            body = this.request.split("\r\n\r\n")[1];
+        } else {
             throw new RuntimeException("post body is empty");
         }
         return body;
@@ -188,6 +195,10 @@ public class RequestHandler {
             System.out.println("***********debug***********");
             System.out.println(message);
         }
+    }
+
+    private void buildErrorResponse(Exception e){
+        this.response = serverResponse.buildResponse(201, Map.of(), e.getMessage());
     }
 
     private enum RequestType {
