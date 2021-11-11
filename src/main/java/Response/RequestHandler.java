@@ -5,11 +5,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.nio.file.StandardOpenOption.WRITE;
+import static util.Utilities.removeNullBytes;
 
 public class RequestHandler {
 
@@ -172,7 +175,7 @@ public class RequestHandler {
     private void tryToWriteToFile(String body) {
         try {
             BufferedWriter bf = Files.newBufferedWriter(Path.of(file.getPath()), WRITE);
-            bf.write(new String(body.getBytes()));
+            bf.write(new String(removeNullBytes(body.getBytes())));
             bf.flush();
         } catch (IOException e) {
             throw new RuntimeException("Unable to write to file");

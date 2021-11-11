@@ -1,6 +1,6 @@
-import ServerInfo.ServerSettingsParser;
 import Server.Server;
 import ServerInfo.ServerInfo;
+import ServerInfo.ServerSettingsParser;
 
 public class Application {
     

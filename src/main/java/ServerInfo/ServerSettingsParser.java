@@ -1,5 +1,6 @@
 package ServerInfo;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -58,6 +59,7 @@ public class ServerSettingsParser {
         parseIsVerbose();
         parsePort();
         parseDirectory();
+        createDirectoryIfNeeded();
         buildServerInfo();
     }
 
@@ -108,11 +110,16 @@ public class ServerSettingsParser {
     }
 
     private IntConsumer setFilePathToUserInput() {
-        return index -> filePathToDir = inputArr[index + 1];
+        return index -> filePathToDir = ServerInfo.defaultPath + inputArr[index + 1];
     }
 
     private Runnable setFilePathToDefault() {
         return () -> filePathToDir = ServerInfo.defaultPath;
+    }
+
+    private void createDirectoryIfNeeded() {
+        File file = new File(filePathToDir);
+        file.mkdirs();
     }
 
     private void buildServerInfo() {

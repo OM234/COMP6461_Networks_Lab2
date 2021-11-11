@@ -1,6 +1,5 @@
 package Response;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -41,7 +40,7 @@ public class ServerResponse {
             addBody();
             addContentDispositionHeader();
             buildResponseMessageWithBody();
-            return ByteBuffer.wrap(removeNullBytes(message.getBytes()));
+            return ByteBuffer.wrap(message.getBytes());
         } catch (Exception e){
             return response;
         }
@@ -54,7 +53,7 @@ public class ServerResponse {
 
         addContentDispositionHeader();
         buildResponseMessageWithBody();
-        return ByteBuffer.wrap(removeNullBytes(message.getBytes()));
+        return ByteBuffer.wrap(message.getBytes());
     }
 
     private void addBody() {
@@ -123,14 +122,5 @@ public class ServerResponse {
         if(body != null){
             this.message += body;
         }
-    }
-
-    private byte[] removeNullBytes(byte[] bytes)
-    {
-        int i = bytes.length - 1;
-        while (i >= 0 && bytes[i] == 0) {
-            --i;
-        }
-        return Arrays.copyOf(bytes, i + 1);
     }
 }

@@ -1,7 +1,7 @@
 package Server;
 
-import ServerInfo.ServerInfo;
 import Response.RequestHandler;
+import ServerInfo.ServerInfo;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
